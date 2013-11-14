@@ -21,7 +21,7 @@ namespace TestSendAndRecieve
             TaskProcedure tp = new TaskProcedure();
             string s = textBox1.Text;
             byte[] b = UTF8Encoding.UTF8.GetBytes(s);
-            byte[] result = tp.GetResult(b);
+            byte[] result = tp.GetResult(b, 10000);
             Console.WriteLine(UTF8Encoding.UTF8.GetString(result, 0, result.Length));
         }
     }

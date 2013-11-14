@@ -10,57 +10,56 @@ namespace TestSendAndRecieve
     class TaskProcedure
     {
         //使用牛逼闪闪的线程间信号量
-        private ManualResetEvent receiveDone =
-            new ManualResetEvent(false);
+        private AutoResetEvent receiveDone =
+            new AutoResetEvent(false);
         private static Object lockCount = new Object();
         
         private static ID GenerateID()
         {
             return Guid.NewGuid().ToString("N");
         }
-        public byte[] GetResult(byte[] content) { 
+        public byte[] GetResult(byte[] content, int waitMiliSeconds) { 
             ID id = GenerateID();
             //do  write
             WriteToFile(content, id);
             ControlCenter.Instance.AddThread(id, receiveDone);
-            receiveDone.WaitOne(100000);
+            receiveDone.WaitOne(waitMiliSeconds);
             byte[] result = ReadFromFile(id);
             //do read
             return result;
         }
         private void WriteToFile(byte[] content, string id)
         {
-            string path = ControlCenter.SourcePath+id;
-            using (StreamWriter sw = File.CreateText(path))
+            string path = ControlCenter.SourcePath + id;
+            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
             {
-               
-                sw.WriteLine(content);
+                fs.Write(content, 0, content.Length);
             }
         }
         private byte[] ReadFromFile(string id)
         {
             string path = ControlCenter.DestinationPath + id;
             byte[] result;
+
             if (File.Exists(path))
             {
-                using (StreamReader sr = File.OpenText(path))
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
-                    string s = "";
-                    StringBuilder sb = new StringBuilder();
-                    while ((s = sr.ReadLine()) != null)
+                    result = new byte[fs.Length];
+                    int numBytesToRead = (int)fs.Length;
+                    int numBytesRead = 0;
+                    while (numBytesToRead > 0)
                     {
-                        sb.Append(s);
+                        int n = fs.Read(result, numBytesRead, numBytesToRead);
+                        if (n == 0) break;
+                        numBytesToRead -= n;
+                        numBytesRead += n;
                     }
-                    char[] c = new char[8192];
-                    sb.CopyTo(0, c, 0, sb.Length);
-                    result = UTF8Encoding.UTF8.GetBytes(c);
                 }
-                Console.WriteLine("success");
             }
             else
             {
                 result = null;
-                Console.WriteLine("fail");
             }
             return result;
       

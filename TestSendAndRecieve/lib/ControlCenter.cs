@@ -8,8 +8,8 @@ namespace TestSendAndRecieve
 {
     class ControlCenter
     {
-        public static string SourcePath = @"E:\ProgramData\visual studio 2010\Projects\TestSendAndRecieve\sourceDir\";
-        public static string DestinationPath = @"E:\ProgramData\visual studio 2010\Projects\TestSendAndRecieve\destinationDir\";
+        public static string SourcePath = @"sourceDir\";
+        public static string DestinationPath = @"destinationDir\";
         private static object m_ControlLock = new object();
         private static ControlCenter m_Instance;
         public static ControlCenter Instance
@@ -37,8 +37,8 @@ namespace TestSendAndRecieve
             }
         }
         private static object m_WaitingThreadPoolLock = new object();
-        private static Dictionary<string, ManualResetEvent> m_WaitingThreadPool;
-        public static Dictionary<string, ManualResetEvent> WaitingThreadPool
+        private static Dictionary<string, AutoResetEvent> m_WaitingThreadPool;
+        public static Dictionary<string, AutoResetEvent> WaitingThreadPool
         {
             get
             {
@@ -48,7 +48,7 @@ namespace TestSendAndRecieve
                     {
                         if (m_WaitingThreadPool == null)
                         {
-                            m_WaitingThreadPool = new Dictionary<string, ManualResetEvent>();
+                            m_WaitingThreadPool = new Dictionary<string, AutoResetEvent>();
                         }
                     }
                 }
@@ -69,7 +69,7 @@ namespace TestSendAndRecieve
         /// </summary>
         /// <param name="id">线程唯一id号</param>
         /// <param name="mre">线程锁</param>
-        public void AddThread(string id, ManualResetEvent mre)
+        public void AddThread(string id, AutoResetEvent mre)
         {
             lock (m_WaitingThreadPoolLock)
             {
@@ -81,9 +81,9 @@ namespace TestSendAndRecieve
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public ManualResetEvent RemoveThread(string id)
+        public AutoResetEvent RemoveThread(string id)
         {
-            ManualResetEvent mre = null; 
+            AutoResetEvent mre = null; 
             lock (m_WaitingThreadPoolLock)
             {
                 if (WaitingThreadPool.ContainsKey(id))

@@ -14,28 +14,64 @@ namespace TestSendAndRecieve
         [IODescriptionAttribute("FSW_ChangedFilter")]
         public NotifyFilters NotifyFilter { get; set; }
 
-        [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
+        //[PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
+        private static object LockWatcher = new object();
+        private static Watcher m_Instance;
+        public static Watcher Instance
+        {
+            get
+            {
+                if (m_Instance == null)
+                {
+                    lock (LockWatcher)
+                    {
+                        if (m_Instance == null)
+                        {
+                            m_Instance = new Watcher();
+                        }
+                    }
+                }
+                return m_Instance;
+            }
+        }
+        private static object LockMonitor = new object();
+        private static FileSystemWatcher m_Monitor;
+        public static FileSystemWatcher Monitor
+        {
+            get
+            {
+                if (m_Monitor == null)
+                {
+                    lock (LockMonitor)
+                    {
+                        if (m_Monitor == null)
+                        {
+                            m_Monitor = new FileSystemWatcher();
+                            // Create a new FileSystemWatcher and set its properties.
+                            m_Monitor.Path = @"sourceDir/";
+                                /* Watch for changes in LastAccess and LastWrite times, and
+                                   the renaming of files or directories. */
+                            m_Monitor.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
+                               | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+                            // Only watch text files.
+                            m_Monitor.Filter = "*";
+                            // Begin watching.
+                            m_Monitor.EnableRaisingEvents = true;
+                        }
+                    }
+                }
+                return m_Monitor;
+            }
+        }
+        public Watcher() {
+        }
         public void Run()
         {
-
-            // Create a new FileSystemWatcher and set its properties.
-            FileSystemWatcher watcher = new FileSystemWatcher();
-            watcher.Path = @"E:/ProgramData/visual studio 2010/Projects/TestSendAndRecieve/destinationDir/";
-            /* Watch for changes in LastAccess and LastWrite times, and
-               the renaming of files or directories. */
-            watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
-               | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            // Only watch text files.
-            watcher.Filter = "*";
-
             // Add event handlers.
-            watcher.Changed += new FileSystemEventHandler(OnChanged);
-            watcher.Created += new FileSystemEventHandler(OnChanged);
-            watcher.Deleted += new FileSystemEventHandler(OnChanged);
-            watcher.Renamed += new RenamedEventHandler(OnRenamed);
-
-            // Begin watching.
-            watcher.EnableRaisingEvents = true;
+            Monitor.Changed += new FileSystemEventHandler(OnChanged);
+            Monitor.Created += new FileSystemEventHandler(OnChanged);
+            Monitor.Deleted += new FileSystemEventHandler(OnChanged);
+            Monitor.Renamed += new RenamedEventHandler(OnRenamed);
 
             // Wait for the user to quit the program.
             while (true) { Thread.Sleep(10000); Console.WriteLine("goon"); };
@@ -47,8 +83,8 @@ namespace TestSendAndRecieve
         {
             // Specify what is done when a file is changed, created, or deleted.
             Console.WriteLine("File: " + e.FullPath + " " + e.Name + " " + e.ChangeType);
-            ManualResetEvent mre = ControlCenter.Instance.RemoveThread(e.Name);
-            lock (mre) { if (mre != null) mre.Set(); }
+            AutoResetEvent mre = ControlCenter.Instance.RemoveThread(e.Name);
+            if (mre != null) mre.Set();
         }
 
         private void OnRenamed(object source, RenamedEventArgs e)
