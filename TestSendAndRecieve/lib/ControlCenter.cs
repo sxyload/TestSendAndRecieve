@@ -29,6 +29,7 @@ namespace TestSendAndRecieve
                     {
                         if (m_Instance == null)
                         {
+                            Console.WriteLine("Create ControlCenter");
                             m_Instance = new ControlCenter();
                         }
                     }
@@ -36,9 +37,9 @@ namespace TestSendAndRecieve
                 return m_Instance;
             }
         }
-        private static object m_WaitingThreadPoolLock = new object();
-        private static Dictionary<string, AutoResetEvent> m_WaitingThreadPool;
-        public static Dictionary<string, AutoResetEvent> WaitingThreadPool
+        private object m_WaitingThreadPoolLock = new object();
+        private Dictionary<string, ManualResetEvent> m_WaitingThreadPool;
+        public Dictionary<string, ManualResetEvent> WaitingThreadPool
         {
             get
             {
@@ -48,16 +49,17 @@ namespace TestSendAndRecieve
                     {
                         if (m_WaitingThreadPool == null)
                         {
-                            m_WaitingThreadPool = new Dictionary<string, AutoResetEvent>();
+                            m_WaitingThreadPool = new Dictionary<string, ManualResetEvent>();
                         }
                     }
                 }
                 return m_WaitingThreadPool;
             }
         }
-        private static Watcher Watch = new Watcher();
+        private Watcher Watch;
         public ControlCenter()
         {//默认的构造函数
+            Watch = Watcher.Instance;
             Thread t = new Thread(Watch.Run);
             t.Start();
         }
@@ -69,7 +71,7 @@ namespace TestSendAndRecieve
         /// </summary>
         /// <param name="id">线程唯一id号</param>
         /// <param name="mre">线程锁</param>
-        public void AddThread(string id, AutoResetEvent mre)
+        public void AddThread(string id, ManualResetEvent mre)
         {
             lock (m_WaitingThreadPoolLock)
             {
@@ -81,9 +83,9 @@ namespace TestSendAndRecieve
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public AutoResetEvent RemoveThread(string id)
+        public ManualResetEvent RemoveThread(string id)
         {
-            AutoResetEvent mre = null; 
+            ManualResetEvent mre = null; 
             lock (m_WaitingThreadPoolLock)
             {
                 if (WaitingThreadPool.ContainsKey(id))

@@ -22,7 +22,14 @@ namespace TestSendAndRecieve
             string s = textBox1.Text;
             byte[] b = UTF8Encoding.UTF8.GetBytes(s);
             byte[] result = tp.GetResult(b, 10000);
-            Console.WriteLine(UTF8Encoding.UTF8.GetString(result, 0, result.Length));
+            if (result == null)
+            {
+                Console.WriteLine("fail");
+            }
+            else
+            {
+                Console.WriteLine(UTF8Encoding.UTF8.GetString(result, 0, result.Length));
+            }
         }
     }
 }

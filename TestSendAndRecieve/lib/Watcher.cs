@@ -34,9 +34,9 @@ namespace TestSendAndRecieve
                 return m_Instance;
             }
         }
-        private static object LockMonitor = new object();
-        private static FileSystemWatcher m_Monitor;
-        public static FileSystemWatcher Monitor
+        private object LockMonitor = new object();
+        private FileSystemWatcher m_Monitor;
+        public FileSystemWatcher Monitor
         {
             get
             {
@@ -48,7 +48,7 @@ namespace TestSendAndRecieve
                         {
                             m_Monitor = new FileSystemWatcher();
                             // Create a new FileSystemWatcher and set its properties.
-                            m_Monitor.Path = @"sourceDir/";
+                            m_Monitor.Path = @"E:\Program Data\Visual Studio 2010\Projects\Git\TestSendAndRecieve\TestSendAndRecieve\bin\Debug\destinationDir\";
                                 /* Watch for changes in LastAccess and LastWrite times, and
                                    the renaming of files or directories. */
                             m_Monitor.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
@@ -63,8 +63,7 @@ namespace TestSendAndRecieve
                 return m_Monitor;
             }
         }
-        public Watcher() {
-        }
+        
         public void Run()
         {
             // Add event handlers.
@@ -74,7 +73,7 @@ namespace TestSendAndRecieve
             Monitor.Renamed += new RenamedEventHandler(OnRenamed);
 
             // Wait for the user to quit the program.
-            while (true) { Thread.Sleep(10000); Console.WriteLine("goon"); };
+            while (true) { };
 
         }
 
@@ -83,8 +82,12 @@ namespace TestSendAndRecieve
         {
             // Specify what is done when a file is changed, created, or deleted.
             Console.WriteLine("File: " + e.FullPath + " " + e.Name + " " + e.ChangeType);
-            AutoResetEvent mre = ControlCenter.Instance.RemoveThread(e.Name);
-            if (mre != null) mre.Set();
+            ManualResetEvent mre = ControlCenter.Instance.RemoveThread(e.Name);
+            if (mre != null)
+            {
+                Console.WriteLine(e.Name + "unlock");
+                mre.Set();
+            }
         }
 
         private void OnRenamed(object source, RenamedEventArgs e)

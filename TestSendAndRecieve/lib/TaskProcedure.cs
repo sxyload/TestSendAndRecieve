@@ -10,8 +10,8 @@ namespace TestSendAndRecieve
     class TaskProcedure
     {
         //使用牛逼闪闪的线程间信号量
-        private AutoResetEvent receiveDone =
-            new AutoResetEvent(false);
+        private ManualResetEvent receiveDone =
+            new ManualResetEvent(false);
         private static Object lockCount = new Object();
         
         private static ID GenerateID()
@@ -23,7 +23,11 @@ namespace TestSendAndRecieve
             //do  write
             WriteToFile(content, id);
             ControlCenter.Instance.AddThread(id, receiveDone);
-            receiveDone.WaitOne(waitMiliSeconds);
+            DateTime st = DateTime.Now;
+            receiveDone.WaitOne();
+            DateTime se = DateTime.Now;
+            TimeSpan s = se - st;
+            Console.WriteLine(s.Milliseconds);
             byte[] result = ReadFromFile(id);
             //do read
             return result;
@@ -34,32 +38,44 @@ namespace TestSendAndRecieve
             using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
             {
                 fs.Write(content, 0, content.Length);
+                fs.Close();
             }
         }
         private byte[] ReadFromFile(string id)
         {
             string path = ControlCenter.DestinationPath + id;
-            byte[] result;
+            byte[] result = null;
 
             if (File.Exists(path))
             {
-                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                Console.WriteLine(path);
+                bool open = false;
+                while (!open)
                 {
-                    result = new byte[fs.Length];
-                    int numBytesToRead = (int)fs.Length;
-                    int numBytesRead = 0;
-                    while (numBytesToRead > 0)
+                    try
                     {
-                        int n = fs.Read(result, numBytesRead, numBytesToRead);
-                        if (n == 0) break;
-                        numBytesToRead -= n;
-                        numBytesRead += n;
+                        using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                        {
+                            result = new byte[fs.Length];
+                            int numBytesToRead = (int)fs.Length;
+                            int numBytesRead = 0;
+                            while (numBytesToRead > 0)
+                            {
+                                int n = fs.Read(result, numBytesRead, numBytesToRead);
+                                if (n == 0) break;
+                                numBytesToRead -= n;
+                                numBytesRead += n;
+                            }
+                            fs.Close();
+                            open = true;
+                        }
+                    }
+                    catch (IOException e)
+                    {
+                        Console.WriteLine(e.Message);
+                        Thread.Sleep(10);
                     }
                 }
-            }
-            else
-            {
-                result = null;
             }
             return result;
       
