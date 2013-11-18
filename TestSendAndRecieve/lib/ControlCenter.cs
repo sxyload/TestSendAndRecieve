@@ -60,8 +60,9 @@ namespace TestSendAndRecieve
         public ControlCenter()
         {//默认的构造函数
             Watch = Watcher.Instance;
-            Thread t = new Thread(Watch.Run);
-            t.Start();
+            Watch.Run();
+            //Thread t = new Thread(Watch.Run);
+            //t.Start();
         }
         public ControlCenter(string sourceDir, string destinationDir)
         {

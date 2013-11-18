@@ -63,18 +63,16 @@ namespace TestSendAndRecieve
                 return m_Monitor;
             }
         }
-        
+        public Watcher()
+        {
+            Console.WriteLine("Create a new Watcher instance");
+        }
         public void Run()
         {
             // Add event handlers.
             Monitor.Changed += new FileSystemEventHandler(OnChanged);
             Monitor.Created += new FileSystemEventHandler(OnChanged);
-            Monitor.Deleted += new FileSystemEventHandler(OnChanged);
             Monitor.Renamed += new RenamedEventHandler(OnRenamed);
-
-            // Wait for the user to quit the program.
-            while (true) { };
-
         }
 
         // Define the event handlers. 
