@@ -47,16 +47,6 @@ namespace TestSendAndRecieve
                         if (m_Monitor == null)
                         {
                             m_Monitor = new FileSystemWatcher();
-                            // Create a new FileSystemWatcher and set its properties.
-                            m_Monitor.Path = @"E:\Program Data\Visual Studio 2010\Projects\Git\TestSendAndRecieve\TestSendAndRecieve\bin\Debug\destinationDir\";
-                                /* Watch for changes in LastAccess and LastWrite times, and
-                                   the renaming of files or directories. */
-                            m_Monitor.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
-                               | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-                            // Only watch text files.
-                            m_Monitor.Filter = "*";
-                            // Begin watching.
-                            m_Monitor.EnableRaisingEvents = true;
                         }
                     }
                 }
@@ -65,14 +55,29 @@ namespace TestSendAndRecieve
         }
         public Watcher()
         {
-            Console.WriteLine("Create a new Watcher instance");
+            SetConfigure();
+            SetEvent();
         }
-        public void Run()
+        public void SetConfigure()
+        {
+            // Create a new FileSystemWatcher and set its properties.
+            Monitor.Path = Configure.Instance.DestinationPath;
+            Console.WriteLine("path set");
+            /* Watch for changes in LastAccess and LastWrite times, and
+               the renaming of files or directories. */
+            Monitor.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
+               | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+            // Only watch text files.
+            Monitor.Filter = "*";
+            // Begin watching.
+            Monitor.EnableRaisingEvents = true;
+        }
+        public void SetEvent()
         {
             // Add event handlers.
             Monitor.Changed += new FileSystemEventHandler(OnChanged);
             Monitor.Created += new FileSystemEventHandler(OnChanged);
-            Monitor.Renamed += new RenamedEventHandler(OnRenamed);
+            Monitor.Renamed += new RenamedEventHandler(OnChanged);
         }
 
         // Define the event handlers. 
@@ -80,18 +85,12 @@ namespace TestSendAndRecieve
         {
             // Specify what is done when a file is changed, created, or deleted.
             Console.WriteLine("File: " + e.FullPath + " " + e.Name + " " + e.ChangeType);
-            ManualResetEvent mre = ControlCenter.Instance.RemoveThread(e.Name);
+            ManualResetEvent mre = ControlCenter.Instance.GetThread(e.Name);
             if (mre != null)
             {
-                Console.WriteLine(e.Name + "unlock");
+                Console.WriteLine(e.Name + " unlock");
                 mre.Set();
             }
-        }
-
-        private void OnRenamed(object source, RenamedEventArgs e)
-        {
-            // Specify what is done when a file is renamed.
-            Console.WriteLine("File: " + e.OldFullPath + " renamed to " + e.FullPath);
         }
     }
 }

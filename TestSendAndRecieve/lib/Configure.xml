@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Configure>
+  <!--some confif-->
+  <SourcePath><![CDATA[sourceDir\]]></SourcePath>
+  <DestinationPath><![CDATA[destinationDir\]]></DestinationPath>
+  <WaitMilliseconds><![CDATA[10000]]></WaitMilliseconds>
+  <WaitTime><![CDATA[100]]></WaitTime>
+  <SleepTime><![CDATA[10]]></SleepTime>
+  <ConcurrentThreadLimit><![CDATA[1000]]></ConcurrentThreadLimit>
+</Configure>
+

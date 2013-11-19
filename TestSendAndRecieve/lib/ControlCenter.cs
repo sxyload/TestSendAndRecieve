@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Collections.Concurrent;
+using System.Xml;
+using System.Xml.Schema;
+
 
 namespace TestSendAndRecieve
 {
     class ControlCenter
     {
-        public static string SourcePath = @"sourceDir\";
-        public static string DestinationPath = @"destinationDir\";
+        
+
         private static object m_ControlLock = new object();
         private static ControlCenter m_Instance;
         public static ControlCenter Instance
@@ -29,7 +33,6 @@ namespace TestSendAndRecieve
                     {
                         if (m_Instance == null)
                         {
-                            Console.WriteLine("Create ControlCenter");
                             m_Instance = new ControlCenter();
                         }
                     }
@@ -38,8 +41,8 @@ namespace TestSendAndRecieve
             }
         }
         private object m_WaitingThreadPoolLock = new object();
-        private Dictionary<string, ManualResetEvent> m_WaitingThreadPool;
-        public Dictionary<string, ManualResetEvent> WaitingThreadPool
+        private ConcurrentDictionary<string, ManualResetEvent> m_WaitingThreadPool;
+        public ConcurrentDictionary<string, ManualResetEvent> WaitingThreadPool
         {
             get
             {
@@ -49,7 +52,7 @@ namespace TestSendAndRecieve
                     {
                         if (m_WaitingThreadPool == null)
                         {
-                            m_WaitingThreadPool = new Dictionary<string, ManualResetEvent>();
+                            m_WaitingThreadPool = new ConcurrentDictionary<string, ManualResetEvent>();
                         }
                     }
                 }
@@ -59,42 +62,27 @@ namespace TestSendAndRecieve
         private Watcher Watch;
         public ControlCenter()
         {//默认的构造函数
+            Console.WriteLine("Create ControlCenter");
             Watch = Watcher.Instance;
-            Watch.Run();
-            //Thread t = new Thread(Watch.Run);
-            //t.Start();
         }
-        public ControlCenter(string sourceDir, string destinationDir)
-        {
-        }
-        /// <summary>
-        /// 同步地向表中添加信号量
-        /// </summary>
-        /// <param name="id">线程唯一id号</param>
-        /// <param name="mre">线程锁</param>
+        
+
         public void AddThread(string id, ManualResetEvent mre)
         {
-            lock (m_WaitingThreadPoolLock)
-            {
-                WaitingThreadPool.Add(id, mre);
-            }
+            WaitingThreadPool.TryAdd(id, mre);
         }
-        /// <summary>
-        /// 同步地从表中删除对应信号量 并且返回对应的信号量
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public ManualResetEvent RemoveThread(string id)
+        
+        public bool RemoveThread(string id)
         {
-            ManualResetEvent mre = null; 
-            lock (m_WaitingThreadPoolLock)
-            {
-                if (WaitingThreadPool.ContainsKey(id))
-                {
-                    mre = WaitingThreadPool[id];
-                    WaitingThreadPool.Remove(id);
-                }
-            }
+            ManualResetEvent mre = null;
+            bool result = WaitingThreadPool.TryRemove(id, out mre);
+            return result;
+        }
+
+        public ManualResetEvent GetThread(string id)
+        {
+            ManualResetEvent mre = null;
+            WaitingThreadPool.TryGetValue(id, out mre);
             return mre;
         }
     }
