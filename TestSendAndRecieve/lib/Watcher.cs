@@ -62,7 +62,6 @@ namespace TestSendAndRecieve
         {
             // Create a new FileSystemWatcher and set its properties.
             Monitor.Path = Configure.Instance.DestinationPath;
-            Console.WriteLine("path set");
             /* Watch for changes in LastAccess and LastWrite times, and
                the renaming of files or directories. */
             Monitor.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
@@ -75,21 +74,28 @@ namespace TestSendAndRecieve
         public void SetEvent()
         {
             // Add event handlers.
-            Monitor.Changed += new FileSystemEventHandler(OnChanged);
-            Monitor.Created += new FileSystemEventHandler(OnChanged);
-            Monitor.Renamed += new RenamedEventHandler(OnChanged);
+            Monitor.Changed += new FileSystemEventHandler(OnReleaseResetEvent);
+            Monitor.Created += new FileSystemEventHandler(OnReleaseResetEvent);
+            Monitor.Renamed += new RenamedEventHandler(OnReleaseResetEvent);
         }
-
+        private object LockEvent = new object();
         // Define the event handlers. 
-        private void OnChanged(object source, FileSystemEventArgs e)
+        private void OnReleaseResetEvent(object source, FileSystemEventArgs e)
         {
-            // Specify what is done when a file is changed, created, or deleted.
-            Console.WriteLine("File: " + e.FullPath + " " + e.Name + " " + e.ChangeType);
-            ManualResetEvent mre = ControlCenter.Instance.GetThread(e.Name);
-            if (mre != null)
+            // make sure that excute reset one by one
+            lock (LockEvent)
             {
-                Console.WriteLine(e.Name + " unlock");
-                mre.Set();
+                // Specify what is done when a file is changed, created, or deleted.
+                ManualResetEvent mre = ControlCenter.Instance.GetThreadSignal(e.Name);
+                if (mre != null)
+                {
+                    Info.Output(InfoLevel.DEBUG, e.Name, e.Name + " unlock");
+                    mre.Set();
+                }
+                else
+                {
+                    Info.Output(InfoLevel.LOG, e.Name, e.Name + " unlock FAIL");
+                }
             }
         }
     }

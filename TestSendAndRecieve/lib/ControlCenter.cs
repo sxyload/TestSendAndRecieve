@@ -41,49 +41,83 @@ namespace TestSendAndRecieve
             }
         }
         private object m_WaitingThreadPoolLock = new object();
-        private ConcurrentDictionary<string, ManualResetEvent> m_WaitingThreadPool;
-        public ConcurrentDictionary<string, ManualResetEvent> WaitingThreadPool
+        private ConcurrentDictionary<string, ManualResetEvent> m_WaitingThreadSignalPool;
+        public ConcurrentDictionary<string, ManualResetEvent> WaitingThreadSignalPool
         {
             get
             {
-                if (m_WaitingThreadPool == null)
+                if (m_WaitingThreadSignalPool == null)
                 {
                     lock (m_WaitingThreadPoolLock)
                     {
-                        if (m_WaitingThreadPool == null)
+                        if (m_WaitingThreadSignalPool == null)
                         {
-                            m_WaitingThreadPool = new ConcurrentDictionary<string, ManualResetEvent>();
+                            m_WaitingThreadSignalPool = new ConcurrentDictionary<string, ManualResetEvent>();
                         }
                     }
                 }
-                return m_WaitingThreadPool;
+                return m_WaitingThreadSignalPool;
             }
         }
         private Watcher Watch;
         public ControlCenter()
         {//默认的构造函数
-            Console.WriteLine("Create ControlCenter");
+            Info.Output(InfoLevel.LOG, "ControlCenter Instance", "Create ControlCenter");
             Watch = Watcher.Instance;
         }
         
 
-        public void AddThread(string id, ManualResetEvent mre)
+        public bool AddThreadSignal(string id, ManualResetEvent mre)
         {
-            WaitingThreadPool.TryAdd(id, mre);
+            lock (WaitingThreadSignalPool)
+            {
+                bool result = WaitingThreadSignalPool.TryAdd(id, mre);
+                if (!result)
+                {
+                    Info.Output(InfoLevel.LOG, id, " thread add fail!");
+                }
+                else
+                {
+                    Info.Output(InfoLevel.DEBUG, id, " thread add success");
+                }
+                return result;
+            }
         }
         
-        public bool RemoveThread(string id)
+        public bool RemoveThreadSignal(string id)
         {
-            ManualResetEvent mre = null;
-            bool result = WaitingThreadPool.TryRemove(id, out mre);
-            return result;
+            lock (WaitingThreadSignalPool)
+            {
+                ManualResetEvent mre = null;
+                bool result = WaitingThreadSignalPool.TryRemove(id, out mre);
+                if (!result)
+                {
+                    Info.Output(InfoLevel.LOG, id, " thread remove fail!");
+                }
+                else
+                {
+                    Info.Output(InfoLevel.DEBUG, id, " thread remove success");
+                }
+                return result;
+            }
         }
 
-        public ManualResetEvent GetThread(string id)
+        public ManualResetEvent GetThreadSignal(string id)
         {
-            ManualResetEvent mre = null;
-            WaitingThreadPool.TryGetValue(id, out mre);
-            return mre;
+            lock (WaitingThreadSignalPool)
+            {
+                ManualResetEvent mre = null;
+                bool result = WaitingThreadSignalPool.TryGetValue(id, out mre);
+                if (!result)
+                {
+                    Info.Output(InfoLevel.LOG, id, " thread get fail!");
+                }
+                else
+                {
+                    Info.Output(InfoLevel.DEBUG, id, " thread get success");
+                }
+                return mre;
+            }
         }
     }
 }

@@ -42,7 +42,7 @@ namespace TestSendAndRecieve
         private void ReadConfigure()
         {
             XmlTextReader xtr = null;
-            Console.WriteLine("read configure");
+            Info.Output(InfoLevel.DEBUG, "Configure", "Try Read Configure");
             try
             {
                 xtr = new XmlTextReader("Configure.xml");
@@ -93,6 +93,9 @@ namespace TestSendAndRecieve
                                     //CurrentThread = 0;
                                     CurrentThread = Int32.Parse(xtr.Value);
                                     break;
+                                case "LogLevel":
+                                    Info.SetLevel(xtr.Value);
+                                    break;
                                 default://
                                     break;
                             }
@@ -104,7 +107,7 @@ namespace TestSendAndRecieve
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Info.Output(InfoLevel.LOG, "Configure", e.Message);
             }
         }
     }

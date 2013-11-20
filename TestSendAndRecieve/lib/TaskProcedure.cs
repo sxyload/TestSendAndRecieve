@@ -13,7 +13,6 @@ namespace TestSendAndRecieve
         private ManualResetEvent receiveDone =
             new ManualResetEvent(false);
         private static Object lockCount = new Object();
-        
         private static ID GenerateID()
         {
             DateTime dt = DateTime.Now;
@@ -21,34 +20,53 @@ namespace TestSendAndRecieve
             return id ;
         }
         public byte[] GetResult(byte[] content) {
+            DateTime st = DateTime.Now;
+
             ID id = GenerateID();
             //do  write
             WriteToFile(content, id);
-            
             //set manualsetEvent
-            DateTime st = DateTime.Now;
-            ControlCenter.Instance.AddThread(id, receiveDone);
+            ControlCenter.Instance.AddThreadSignal(id, receiveDone);
             receiveDone.WaitOne(Configure.Instance.WaitMilliseconds);
-            ControlCenter.Instance.RemoveThread(id);
-            DateTime se = DateTime.Now;
-            TimeSpan s = se - st;
-            Console.WriteLine(id+" "+s.TotalMilliseconds);
-            
+            ControlCenter.Instance.RemoveThreadSignal(id);
             //do read
             byte[] result = ReadFromFile(id, Configure.Instance.WaitTime, Configure.Instance.SleepTime);
-            
             //delete File 
-            File.Delete(Configure.Instance.DestinationPath + id);
-            File.Delete(Configure.Instance.SourcePath + id);
+            DeleteFile(id, Configure.Instance.DestinationPath);
+            DeleteFile(id, Configure.Instance.SourcePath);
+
+            DateTime se = DateTime.Now;
+            TimeSpan s = se - st;
+            if (result == null) Info.Output(InfoLevel.LOG, id ," cost " + s.TotalMilliseconds + "ms  Request Time Out!");
+            else    Info.Output(InfoLevel.LOG, id, " cost " + s.TotalMilliseconds + "ms  Request Success!");
             return result;
+        }
+        private void DeleteFile(string id, string path)
+        {
+            try
+            {
+                File.Delete(path + id);
+                Info.Output(InfoLevel.DEBUG, id, "File Delete Success");
+            }
+            catch (IOException e)
+            {
+                Info.Output(InfoLevel.LOG, id, "File Delete Fail "+e.Message);
+            }
         }
         private void WriteToFile(byte[] content, string id)
         {
             string path = Configure.Instance.SourcePath + id;
-            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
+            try
             {
-                fs.Write(content, 0, content.Length);
-                fs.Close();
+                using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
+                {
+                    fs.Write(content, 0, content.Length);
+                    fs.Close();
+                }
+            }
+            catch (IOException e)
+            {
+               Info.Output(InfoLevel.LOG, id, " Write Request To File Fail");
             }
         }
         /// <summary>
@@ -65,9 +83,8 @@ namespace TestSendAndRecieve
 
             if (File.Exists(path))
             {
-                Console.WriteLine(path);
                 bool open = false;
-                while (!open && (times-- >= 0) )
+                while (!open && (times-- >= 0))
                 {
                     try
                     {
@@ -89,10 +106,18 @@ namespace TestSendAndRecieve
                     }
                     catch (IOException e)
                     {
-                        Console.WriteLine(e.Message);
+                        Info.Output(InfoLevel.DEBUG, id, e.Message);
                         Thread.Sleep(sleepTime);
                     }
                 }
+                if (!open)
+                {
+                    Info.Output(InfoLevel.LOG, id, " Result File Open Fail");
+                }
+            }
+            else
+            {
+                Info.Output(InfoLevel.LOG, id, " Result File Not Found");
             }
             return result;
         }

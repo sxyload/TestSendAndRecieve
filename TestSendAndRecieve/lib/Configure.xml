@@ -7,5 +7,6 @@
   <WaitTime><![CDATA[100]]></WaitTime>
   <SleepTime><![CDATA[10]]></SleepTime>
   <ConcurrentThreadLimit><![CDATA[1000]]></ConcurrentThreadLimit>
+  <LogLevel><![CDATA[Debug]]></LogLevel>
 </Configure>
 
