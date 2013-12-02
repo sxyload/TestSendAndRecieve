@@ -17,6 +17,9 @@ namespace TestSendAndRecieve
         public int ConcurrentThreadLimit;
         public int CurrentThread;
         private static object LockInstance = new object();
+        /// <summary>
+        /// 配置的唯一实例
+        /// </summary>
         private static Configure m_Instance;
         public static Configure Instance
         {
@@ -39,6 +42,9 @@ namespace TestSendAndRecieve
         {
             ReadConfigure();
         }
+        /// <summary>
+        /// 读取XML文件中的配置
+        /// </summary>
         private void ReadConfigure()
         {
             XmlTextReader xtr = null;

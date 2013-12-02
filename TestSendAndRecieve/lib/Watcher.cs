@@ -80,6 +80,11 @@ namespace TestSendAndRecieve
         }
         private object LockEvent = new object();
         // Define the event handlers. 
+        /// <summary>
+        /// 检测到文件变动后，释放对应的信号
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e">文件变动事件</param>
         private void OnReleaseResetEvent(object source, FileSystemEventArgs e)
         {
             // make sure that excute reset one by one
